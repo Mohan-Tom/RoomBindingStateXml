@@ -11,7 +11,7 @@ import androidx.fragment.app.DialogFragment
 import com.example.roombindingstatexml.databinding.FragmentAddContactDialogBinding
 
 class AddContactDialogFragment(
-    private val onEvent: (ContactEvent) -> Unit
+    private val onEvent: (ContactUiAction) -> Unit = {}
 ) : DialogFragment() {
 
     private val binding by lazy { FragmentAddContactDialogBinding.inflate(LayoutInflater.from(context)) }
@@ -36,7 +36,7 @@ class AddContactDialogFragment(
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 onEvent(
-                    ContactEvent.SetFirstName(p0.toString())
+                    ContactUiAction.SetFirstName(p0.toString())
                 )
             }
 
@@ -48,7 +48,7 @@ class AddContactDialogFragment(
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 onEvent(
-                    ContactEvent.SetLastName(p0.toString())
+                    ContactUiAction.SetLastName(p0.toString())
                 )
             }
 
@@ -60,7 +60,7 @@ class AddContactDialogFragment(
 
             override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
                 onEvent(
-                    ContactEvent.SetPhoneNumber(p0.toString())
+                    ContactUiAction.SetPhoneNumber(p0.toString())
                 )
             }
 
@@ -68,16 +68,15 @@ class AddContactDialogFragment(
         })
 
         binding.btnSave.setOnClickListener {
-
             onEvent(
-                ContactEvent.SaveContact
+                ContactUiAction.SaveContactUi
             )
+            dismiss()
         }
     }
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-
-        onEvent(ContactEvent.HideDialog)
+        onEvent(ContactUiAction.HideDialog)
     }
 }

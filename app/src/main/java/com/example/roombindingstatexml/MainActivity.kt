@@ -6,12 +6,13 @@ import androidx.activity.viewModels
 import androidx.lifecycle.*
 import androidx.room.Room
 import com.example.roombindingstatexml.databinding.ActivityMainBinding
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-
-    private val binding by lazy { ActivityMainBinding.inflate(layoutInflater) }
 
     private val db by lazy {
         Room.databaseBuilder(
@@ -21,6 +22,7 @@ class MainActivity : AppCompatActivity() {
         ).build()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private val viewModel by viewModels<ContactViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
@@ -31,82 +33,89 @@ class MainActivity : AppCompatActivity() {
         }
     )
 
-    private val contactAdapter by lazy {
-        ContactsAdapter(::deleteContact)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setupUI()
-        observers()
+        binding.bindState(
+            uiState = viewModel.uiState,
+            uiAction = viewModel.accept
+        )
     }
 
-    private fun setupUI() {
-        binding.apply {
-            rvContacts.adapter = contactAdapter
+    private fun ActivityMainBinding.bindState(
+        uiState: StateFlow<ContactState>,
+        uiAction: (ContactUiAction) -> Unit
+    ) {
+        val contactsAdapter = ContactsAdapter { deletedContact ->
+            uiAction(ContactUiAction.DeleteContactUi(deletedContact))
         }
 
-        binding.scrollRadioGroup.isHorizontalScrollBarEnabled = false
+        //scrollRadioGroup.isHorizontalScrollBarEnabled = false
 
-        binding.fabNew.setOnClickListener {
-            newContactDialog()
+        rgSort.setOnCheckedChangeListener { _, id ->
+            uiAction(ContactUiAction.SortContacts(
+                when(id) {
+                    R.id.rbFirstName -> {
+                        SortType.FIRST_NAME
+                    }
+                    R.id.rbLastName -> {
+                        SortType.LAST_NAME
+                    }
+                    R.id.rbPhoneNumber -> {
+                        SortType.PHONE_NUMBER
+                    }
+                    else -> SortType.FIRST_NAME
+                }
+            ))
         }
 
-        binding.rgSort.setOnCheckedChangeListener { _, id ->
-            when(id) {
-                R.id.rbFirstName -> {
-                    sortContacts(SortType.FIRST_NAME)
-                }
-                R.id.rbLastName -> {
-                    sortContacts(SortType.LAST_NAME)
-                }
-                R.id.rbPhoneNumber -> {
-                    sortContacts(SortType.PHONE_NUMBER)
+        val isAddingContactFlow = uiState.map { it.isAddingContact }
+            .distinctUntilChanged()
+
+        lifecycleScope.launch {
+            isAddingContactFlow.collectLatest { isAddingContact ->
+
+                println("isAddingContact >> $isAddingContact")
+
+                if (isAddingContact) {
+                    AddContactDialogFragment(
+                        onEvent = uiAction
+                    ).also {
+                        it.show(supportFragmentManager, it.tag)
+                    }
                 }
             }
         }
-    }
 
-    private fun newContactDialog() {
-        viewModel.onEvent(
-            event = ContactEvent.ShowDialog
+        bindList(
+            adapter = contactsAdapter,
+            uiState = uiState,
+        )
+
+        bindClick(
+            uiAction = uiAction
         )
     }
 
-    private fun deleteContact(contact: Contact) {
-        viewModel.onEvent(
-            event = ContactEvent.DeleteContact(contact)
-        )
-    }
+    private fun ActivityMainBinding.bindList(
+        adapter: ContactsAdapter,
+        uiState: StateFlow<ContactState>
+    ) {
+        rvContacts.adapter = adapter
 
-    private fun sortContacts(sortType: SortType) {
-        viewModel.onEvent(
-            event = ContactEvent.SortContacts(sortType)
-        )
-    }
-
-    private fun observers() {
+        val contactsFlow = uiState.map { it.contacts }
+            .distinctUntilChanged()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-
-                viewModel.state.collectLatest { state ->
-
-                    println("State >> $state")
-
-                    if(state.isAddingContact) {
-                        AddContactDialogFragment(
-                            onEvent = viewModel::onEvent
-                        ).also {
-                            it.show(supportFragmentManager, it.tag)
-                        }
-                    }
-
-                    contactAdapter.contactList = state.contacts
-                }
+                contactsFlow.collectLatest(adapter::submitList)
             }
         }
+    }
+
+    private fun ActivityMainBinding.bindClick(uiAction: (ContactUiAction) -> Unit) {
+        fabNew.setOnClickListener { uiAction(ContactUiAction.ShowDialog) }
     }
 }

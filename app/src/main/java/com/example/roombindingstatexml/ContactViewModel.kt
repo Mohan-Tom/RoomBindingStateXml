@@ -11,44 +11,58 @@ class ContactViewModel(
     private val dao: ContactDao
 ): ViewModel() {
 
-    private val _sortType = MutableStateFlow(SortType.FIRST_NAME)
+    private val _uiState = MutableStateFlow(ContactState())
+    val uiState = _uiState.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ContactState()
+    )
 
-    private val _contacts = _sortType
-        .flatMapLatest { sortType ->
-            when(sortType) {
-                SortType.FIRST_NAME -> dao.getContactsOrderedByFirstName()
-                SortType.LAST_NAME -> dao.getContactsOrderedByLastName()
-                SortType.PHONE_NUMBER -> dao.getContactsOrderedByPhoneNumber()
+    val accept: (ContactUiAction) -> Unit
+
+    init {
+        val sortTypeFlow = uiState.map { it.sortType }
+            .distinctUntilChanged()
+
+        val contactsFlow = sortTypeFlow
+            .flatMapLatest { sortType ->
+                when(sortType) {
+                    SortType.FIRST_NAME -> dao.getContactsOrderedByFirstName()
+                    SortType.LAST_NAME -> dao.getContactsOrderedByLastName()
+                    SortType.PHONE_NUMBER -> dao.getContactsOrderedByPhoneNumber()
+                }
             }
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+            .distinctUntilChanged()
 
-    private val _state = MutableStateFlow(ContactState())
-    val state = combine(_state, _sortType, _contacts) { state, sortType, contacts ->
-        state.copy(
-            contacts = contacts,
-            sortType = sortType
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ContactState())
+        contactsFlow.onEach { contacts ->
+                _uiState.update { state ->
+                    state.copy(
+                        contacts = contacts
+                    )
+                }
+            }.launchIn(viewModelScope)
 
-    fun onEvent(event: ContactEvent) {
+        accept = { uiAction -> onUiAction(uiAction) }
+    }
+
+    private fun onUiAction(event: ContactUiAction) {
         when(event) {
-            is ContactEvent.DeleteContact -> {
+            is ContactUiAction.DeleteContactUi -> {
                 viewModelScope.launch {
                     dao.deleteContact(event.contact)
                 }
             }
-            ContactEvent.HideDialog -> {
-                _state.update {
+            ContactUiAction.HideDialog -> {
+                _uiState.update {
                     it.copy(
                         isAddingContact = false
                     )
                 }
             }
-            ContactEvent.SaveContact -> {
-                val firstName = state.value.firstName
-                val lastName = state.value.lastName
-                val phoneNumber = state.value.phoneNumber
+            ContactUiAction.SaveContactUi -> {
+                val firstName = uiState.value.firstName
+                val lastName = uiState.value.lastName
+                val phoneNumber = uiState.value.phoneNumber
 
                 if(firstName.isBlank() || lastName.isBlank() || phoneNumber.isBlank())
                     return
@@ -62,35 +76,39 @@ class ContactViewModel(
                 viewModelScope.launch {
                     dao.upsertContact(contact)
                 }
-                _state.update { it.copy(
+                _uiState.update { it.copy(
                     isAddingContact = false,
                     firstName = "",
                     lastName = "",
                     phoneNumber = ""
                 ) }
             }
-            is ContactEvent.SetFirstName -> {
-                _state.update { it.copy(
+            is ContactUiAction.SetFirstName -> {
+                _uiState.update { it.copy(
                     firstName = event.firstName
                 ) }
             }
-            is ContactEvent.SetLastName -> {
-                _state.update { it.copy(
+            is ContactUiAction.SetLastName -> {
+                _uiState.update { it.copy(
                     lastName = event.lastName
                 ) }
             }
-            is ContactEvent.SetPhoneNumber -> {
-                _state.update { it.copy(
+            is ContactUiAction.SetPhoneNumber -> {
+                _uiState.update { it.copy(
                     phoneNumber = event.phoneNumber
                 ) }
             }
-            ContactEvent.ShowDialog -> {
-                _state.update { it.copy(
+            is ContactUiAction.ShowDialog -> {
+                _uiState.update { it.copy(
                     isAddingContact = true
                 ) }
             }
-            is ContactEvent.SortContacts -> {
-                _sortType.value = event.sortType
+            is ContactUiAction.SortContacts -> {
+                _uiState.update { state ->
+                    state.copy(
+                        sortType = event.sortType
+                    )
+                }
             }
         }
     }

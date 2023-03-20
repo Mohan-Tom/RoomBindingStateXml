@@ -1,12 +1,12 @@
 package com.example.roombindingstatexml
 
-sealed interface ContactEvent {
-    object SaveContact: ContactEvent
-    data class SetFirstName(val firstName: String): ContactEvent
-    data class SetLastName(val lastName: String): ContactEvent
-    data class SetPhoneNumber(val phoneNumber: String): ContactEvent
-    object ShowDialog: ContactEvent
-    object HideDialog: ContactEvent
-    data class SortContacts(val sortType: SortType): ContactEvent
-    data class DeleteContact(val contact: Contact): ContactEvent
+sealed interface ContactUiAction {
+    object SaveContactUi: ContactUiAction
+    data class SetFirstName(val firstName: String): ContactUiAction
+    data class SetLastName(val lastName: String): ContactUiAction
+    data class SetPhoneNumber(val phoneNumber: String): ContactUiAction
+    object ShowDialog: ContactUiAction
+    object HideDialog: ContactUiAction
+    data class SortContacts(val sortType: SortType): ContactUiAction
+    data class DeleteContactUi(val contact: Contact): ContactUiAction
 }
