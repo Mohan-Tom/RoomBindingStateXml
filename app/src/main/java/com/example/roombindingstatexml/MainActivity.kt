@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             isAddingContactFlow.collectLatest { isAddingContact ->
 
-                println("isAddingContact >> $isAddingContact")
+                //println("isAddingContact >> $isAddingContact")
 
                 if (isAddingContact) {
                     AddContactDialogFragment(
