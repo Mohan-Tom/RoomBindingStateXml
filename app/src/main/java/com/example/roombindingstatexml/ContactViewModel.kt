@@ -18,12 +18,15 @@ class ContactViewModel(
         initialValue = ContactState()
     )
 
+    //UI action from UI layer
     val accept: (ContactUiAction) -> Unit
 
     init {
+        //produce sort type
         val sortTypeFlow = uiState.map { it.sortType }
             .distinctUntilChanged()
 
+        //collect sort type and produce contacts based on sort type
         val contactsFlow = sortTypeFlow
             .flatMapLatest { sortType ->
                 when(sortType) {
@@ -34,6 +37,7 @@ class ContactViewModel(
             }
             .distinctUntilChanged()
 
+        //observe contacts and produce to UI state
         contactsFlow.onEach { contacts ->
                 _uiState.update { state ->
                     state.copy(
@@ -42,9 +46,11 @@ class ContactViewModel(
                 }
             }.launchIn(viewModelScope)
 
+        //user actions
         accept = { uiAction -> onUiAction(uiAction) }
     }
 
+    //UI actions
     private fun onUiAction(event: ContactUiAction) {
         when(event) {
             is ContactUiAction.DeleteContactUi -> {

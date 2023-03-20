@@ -71,6 +71,7 @@ class MainActivity : AppCompatActivity() {
             ))
         }
 
+        //is show dialog flow
         val isAddingContactFlow = uiState.map { it.isAddingContact }
             .distinctUntilChanged()
 
@@ -105,6 +106,7 @@ class MainActivity : AppCompatActivity() {
     ) {
         rvContacts.adapter = adapter
 
+        //list flow
         val contactsFlow = uiState.map { it.contacts }
             .distinctUntilChanged()
 

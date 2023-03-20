@@ -7,9 +7,11 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.DialogFragment
 import com.example.roombindingstatexml.databinding.FragmentAddContactDialogBinding
 
+// todo: need to implement dialog view model for screen configuration changes
 class AddContactDialogFragment(
     private val onEvent: (ContactUiAction) -> Unit = {}
 ) : DialogFragment() {
@@ -31,46 +33,20 @@ class AddContactDialogFragment(
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         }
 
-        binding.etFirstName.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) = Unit
+        binding.etFirstName.doAfterTextChanged {
+            onEvent(ContactUiAction.SetFirstName(it.toString()))
+        }
 
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                onEvent(
-                    ContactUiAction.SetFirstName(p0.toString())
-                )
-            }
+        binding.etLastName.doAfterTextChanged {
+            onEvent(ContactUiAction.SetLastName(it.toString()))
+        }
 
-            override fun afterTextChanged(p0: Editable?) = Unit
-        })
-
-        binding.etLastName.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) = Unit
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                onEvent(
-                    ContactUiAction.SetLastName(p0.toString())
-                )
-            }
-
-            override fun afterTextChanged(p0: Editable?) = Unit
-        })
-
-        binding.etPhoneNumber.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) = Unit
-
-            override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                onEvent(
-                    ContactUiAction.SetPhoneNumber(p0.toString())
-                )
-            }
-
-            override fun afterTextChanged(p0: Editable?) = Unit
-        })
+        binding.etPhoneNumber.doAfterTextChanged {
+            onEvent(ContactUiAction.SetPhoneNumber(it.toString()))
+        }
 
         binding.btnSave.setOnClickListener {
-            onEvent(
-                ContactUiAction.SaveContactUi
-            )
+            onEvent(ContactUiAction.SaveContactUi)
             dismiss()
         }
     }
