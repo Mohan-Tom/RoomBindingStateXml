@@ -82,10 +82,11 @@ class MainActivity : AppCompatActivity() {
 
                 if (isAddingContact) {
                     AddContactDialogFragment(
-                        onEvent = uiAction
+                        /*onEvent = uiAction*/
                     ).also {
                         it.show(supportFragmentManager, it.tag)
                     }
+                    uiAction(ContactUiAction.HideDialog)
                 }
             }
         }
