@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.roombindingstatexml">
 
-    <application
+    <application android:name=".AppContext"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -14,7 +14,7 @@
         android:theme="@style/Theme.RoomBindingStateXml"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".contacts_screen.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

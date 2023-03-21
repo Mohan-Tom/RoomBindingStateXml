@@ -1,10 +1,11 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.contacts_screen
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.example.roombindingstatexml.Contact
 import com.example.roombindingstatexml.databinding.ContactItemBinding
 
 class ContactsAdapter(

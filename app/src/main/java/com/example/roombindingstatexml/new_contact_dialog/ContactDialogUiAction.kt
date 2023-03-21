@@ -1,4 +1,4 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.new_contact_dialog
 
 sealed interface ContactDialogUiAction {
     class SetFirstName(val firstName: String) : ContactDialogUiAction

@@ -1,11 +1,14 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.contacts_screen
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.*
-import androidx.room.Room
+import com.example.roombindingstatexml.ContactDatabase
+import com.example.roombindingstatexml.R
 import com.example.roombindingstatexml.databinding.ActivityMainBinding
+import com.example.roombindingstatexml.new_contact_dialog.AddContactDialogFragment
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -14,12 +17,15 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private val db by lazy {
-        Room.databaseBuilder(
+    private val db: ContactDatabase by lazy {
+
+        /*Room.databaseBuilder(
             applicationContext,
             ContactDatabase::class.java,
             "contacts.db"
-        ).build()
+        ).build()*/
+
+        ContactDatabase.getInstance(applicationContext)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -32,6 +38,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
     )
+
+    private var onAddContactClicked = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,20 +63,22 @@ class MainActivity : AppCompatActivity() {
         //scrollRadioGroup.isHorizontalScrollBarEnabled = false
 
         rgSort.setOnCheckedChangeListener { _, id ->
-            uiAction(ContactUiAction.SortContacts(
-                when(id) {
-                    R.id.rbFirstName -> {
-                        SortType.FIRST_NAME
+            uiAction(
+                ContactUiAction.SortContacts(
+                    when (id) {
+                        R.id.rbFirstName -> {
+                            SortType.FIRST_NAME
+                        }
+                        R.id.rbLastName -> {
+                            SortType.LAST_NAME
+                        }
+                        R.id.rbPhoneNumber -> {
+                            SortType.PHONE_NUMBER
+                        }
+                        else -> SortType.FIRST_NAME
                     }
-                    R.id.rbLastName -> {
-                        SortType.LAST_NAME
-                    }
-                    R.id.rbPhoneNumber -> {
-                        SortType.PHONE_NUMBER
-                    }
-                    else -> SortType.FIRST_NAME
-                }
-            ))
+                )
+            )
         }
 
         //is show dialog flow
@@ -80,12 +90,20 @@ class MainActivity : AppCompatActivity() {
 
                 //println("isAddingContact >> $isAddingContact")
 
-                if (isAddingContact) {
-                    AddContactDialogFragment(
-                        /*onEvent = uiAction*/
-                    ).also {
-                        it.show(supportFragmentManager, it.tag)
-                    }
+                if (isAddingContact && onAddContactClicked) {
+                    AddContactDialogFragment.Builder()
+                        .setOnDismissListener { isSuccess ->
+                            if(isSuccess) {
+                                Toast.makeText(this@MainActivity, "Succeeded", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(this@MainActivity, "Failed", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .build()
+                        .also {
+                            it.show(supportFragmentManager, it.tag)
+                            onAddContactClicked = false
+                        }
                     uiAction(ContactUiAction.HideDialog)
                 }
             }
@@ -119,6 +137,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun ActivityMainBinding.bindClick(uiAction: (ContactUiAction) -> Unit) {
-        fabNew.setOnClickListener { uiAction(ContactUiAction.ShowDialog) }
+        fabNew.setOnClickListener {
+            onAddContactClicked = true
+            uiAction(ContactUiAction.ShowDialog)
+        }
     }
 }

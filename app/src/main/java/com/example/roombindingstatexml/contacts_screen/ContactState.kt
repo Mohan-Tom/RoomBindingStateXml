@@ -1,4 +1,6 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.contacts_screen
+
+import com.example.roombindingstatexml.Contact
 
 data class ContactState(
     val contacts: List<Contact> = emptyList(),

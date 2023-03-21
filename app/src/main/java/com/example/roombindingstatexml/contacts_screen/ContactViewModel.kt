@@ -1,7 +1,8 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.contacts_screen
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.roombindingstatexml.ContactDao
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ class ContactViewModel(
 
         //observe contacts and produce to UI state
         contactsFlow.onEach { contacts ->
+            println("contactsFlow >> $contacts")
                 _uiState.update { state ->
                     state.copy(
                         contacts = contacts
@@ -64,45 +66,6 @@ class ContactViewModel(
                         isAddingContact = false
                     )
                 }
-            }
-            ContactUiAction.SaveContactUi -> {
-                val firstName = uiState.value.firstName
-                val lastName = uiState.value.lastName
-                val phoneNumber = uiState.value.phoneNumber
-
-                if(firstName.isBlank() || lastName.isBlank() || phoneNumber.isBlank())
-                    return
-
-                val contact = Contact(
-                    firstName = firstName,
-                    lastName = lastName,
-                    phoneNumber = phoneNumber
-                )
-
-                viewModelScope.launch {
-                    dao.upsertContact(contact)
-                }
-                _uiState.update { it.copy(
-                    isAddingContact = false,
-                    firstName = "",
-                    lastName = "",
-                    phoneNumber = ""
-                ) }
-            }
-            is ContactUiAction.SetFirstName -> {
-                _uiState.update { it.copy(
-                    firstName = event.firstName
-                ) }
-            }
-            is ContactUiAction.SetLastName -> {
-                _uiState.update { it.copy(
-                    lastName = event.lastName
-                ) }
-            }
-            is ContactUiAction.SetPhoneNumber -> {
-                _uiState.update { it.copy(
-                    phoneNumber = event.phoneNumber
-                ) }
             }
             is ContactUiAction.ShowDialog -> {
                 _uiState.update { it.copy(

@@ -6,6 +6,7 @@
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.2074074074074074" />
         <entry key="app/src/main/res/layout/add_contact_dialog.xml" value="0.2074074074074074" />
         <entry key="app/src/main/res/layout/contact_item.xml" value="0.2074074074074074" />
+        <entry key="app/src/main/res/layout/fragment_add_contact_dialog.xml" value="0.265625" />
         <entry key="app/src/main/res/layout/sort_item_view.xml" value="0.3164102564102564" />
       </map>
     </option>

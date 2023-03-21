@@ -1,7 +1,9 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.new_contact_dialog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.roombindingstatexml.Contact
+import com.example.roombindingstatexml.ContactDao
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -16,7 +18,7 @@ class ContactDialogViewModel(
         initialValue = SaveContactState()
     )
 
-    private val _uiEvent = MutableSharedFlow<AddContactDialogEvent>()
+    private val _uiEvent = MutableSharedFlow<AddContactDialogEvent>(replay = 2)
     val uiEvent = _uiEvent.asSharedFlow()
 
     val userAction: (ContactDialogUiAction) -> Unit
@@ -59,14 +61,14 @@ class ContactDialogViewModel(
             }
 
             ContactDialogUiAction.SaveContact -> {
-                val firstName = uiState.value.firstName
-                val lastName = uiState.value.lastName
-                val phoneNumber = uiState.value.phoneNumber
+                val firstName = _uiState.value.firstName
+                val lastName = _uiState.value.lastName
+                val phoneNumber = _uiState.value.phoneNumber
 
                 println("SaveContact >> $firstName, $lastName, $phoneNumber")
 
                 if(firstName.isBlank() || lastName.isBlank() || phoneNumber.isBlank()) {
-                    sendEvent(AddContactDialogEvent.showToast("Fill the fields"))
+                    sendEvent(AddContactDialogEvent.ShowToast("Fill the fields"))
                     return
                 }
 
@@ -79,19 +81,27 @@ class ContactDialogViewModel(
                 println("SaveContact >> $contact")
 
                 viewModelScope.launch {
+
+                    //delay(3000) // testing purpose
                     dao.upsertContact(contact)
-                }
 
-                _uiState.update {
-                    it.copy(
-                        firstName = "",
-                        lastName = "",
-                        phoneNumber = ""
-                    )
-                }
+                    /*_uiState.update {
+                        it.copy(
+                            firstName = "",
+                            lastName = "",
+                            phoneNumber = ""
+                        )
+                    }*/
 
-                sendEvent(AddContactDialogEvent.showToast("Success"))
-                sendEvent(AddContactDialogEvent.dialogDismiss)
+                    sendEvent(AddContactDialogEvent.ShowToast("Success"))
+
+                    _uiState.update {
+                        it.copy(
+                            dialogDismiss = true
+                        )
+                    }
+                    //sendEvent(AddContactDialogEvent.DialogDismiss)
+                }
             }
         }
     }

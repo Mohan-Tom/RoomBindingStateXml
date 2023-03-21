@@ -1,4 +1,4 @@
-package com.example.roombindingstatexml
+package com.example.roombindingstatexml.contacts_screen
 
 enum class SortType {
     FIRST_NAME,
